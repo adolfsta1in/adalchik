@@ -1,13 +1,11 @@
 import type { supabaseServer } from "@/lib/supabase/server";
-import type { Player } from "@/lib/game";
+import { playerToday, type Player } from "@/lib/game";
 
 type DB = Awaited<ReturnType<typeof supabaseServer>>;
 export type Local = { local_date: string | null; week_start: string | null };
 
-export async function localsFor(supabase: DB, players: Player[]) {
-  return Promise.all(
-    players.map(async (p) => (await supabase.rpc("player_today", { p_player: p.id }).single()).data as Local),
-  );
+export function localsFor(players: Player[]): Local[] {
+  return players.map((p) => playerToday(p.timezone));
 }
 
 /** Серии, квест дня, цели недели и идущий блиц для экрана «Арена». */

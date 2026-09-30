@@ -14,9 +14,9 @@ export default async function ArenaPage() {
   const players = [me, ...(rival ? [rival] : [])];
 
   // У каждого игрока своя локальная неделя и свой «сегодня»
-  const locals = await localsFor(supabase, players);
+  const locals = localsFor(players);
 
-  const [weekRows, dayRows, month, feed, settings, game] = await Promise.all([
+  const [weekRows, dayRows, month, feed, settings, game, { count: unread }] = await Promise.all([
     Promise.all(
       players.map((p, i) =>
         supabase.from("v_weekly_scores").select("points").eq("player_id", p.id).eq("week_start", locals[i].week_start!).maybeSingle(),
@@ -36,12 +36,9 @@ export default async function ArenaPage() {
       .limit(30),
     supabase.from("app_settings").select("undo_window_minutes, quest_bonus").single(),
     gameState(supabase, players, locals),
+    supabase.from("notifications").select("id", { count: "exact", head: true }).eq("player_id", me.id).is("read_at", null),
   ]);
-  const { count: unread } = await supabase
-    .from("notifications")
-    .select("id", { count: "exact", head: true })
-    .eq("player_id", me.id)
-    .is("read_at", null);
+
   const weekday = new Date(today.local_date! + "T00:00:00Z").getUTCDay(); // 0 = вс
   const quest = game.quests[0];
 

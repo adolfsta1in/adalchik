@@ -135,3 +135,10 @@ export function tint(hex: string, alpha = 0.14) {
   const n = parseInt(hex.replace("#", ""), 16);
   return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
 }
+
+/** Локальные «сегодня» и понедельник недели игрока (как player_local в SQL), без запроса к БД. */
+export function playerToday(tz: string, at = new Date()) {
+  const local_date = new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" }).format(at);
+  const isoDow = ((new Date(local_date + "T00:00:00Z").getUTCDay() + 6) % 7) + 1;
+  return { local_date, week_start: addDays(local_date, 1 - isoDow) };
+}
