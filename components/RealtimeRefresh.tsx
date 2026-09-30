@@ -19,6 +19,9 @@ export function RealtimeRefresh() {
       .channel("arena")
       .on("postgres_changes", { event: "*", schema: "public", table: "activities" }, refresh)
       .on("postgres_changes", { event: "*", schema: "public", table: "score_ledger" }, refresh)
+      .on("postgres_changes", { event: "*", schema: "public", table: "blitz_sessions" }, refresh)
+      .on("postgres_changes", { event: "*", schema: "public", table: "blitz_participants" }, refresh)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "player_achievements" }, refresh)
       .subscribe((status, err) => {
         if (process.env.NODE_ENV !== "production") console.log("[realtime]", status, err?.message ?? "");
       });

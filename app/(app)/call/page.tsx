@@ -1,5 +1,6 @@
 import { CallScreen } from "@/components/CallScreen";
 import { DEFAULT_INDUSTRIES } from "@/lib/game";
+import { activeBlitz } from "@/lib/game-state";
 import { getSession } from "@/lib/session";
 
 export default async function CallPage({ searchParams }: PageProps<"/call">) {
@@ -23,8 +24,15 @@ export default async function CallPage({ searchParams }: PageProps<"/call">) {
     supabase.from("activities").select("offer").eq("player_id", me.id).not("offer", "is", null)
       .order("created_at", { ascending: false }).limit(1).maybeSingle(),
     typeof leadId === "string" ? supabase.from("leads").select("*").eq("id", leadId).maybeSingle() : Promise.resolve({ data: null }),
-    supabase.from("app_settings").select("undo_window_minutes, streak_min_calls").single(),
+    supabase.from("app_settings").select("undo_window_minutes, streak_min_calls, blitz_multiplier").single(),
   ]);
+  const [blitz, quest] = await Promise.all([
+    activeBlitz(supabase),
+    supabase.rpc("quest_progress", { p_player: me.id, p_date: today.local_date! }).maybeSingle(),
+  ]);
+  const myBlitz = blitz && blitz.participants.includes(me.id)
+    ? { endsAt: blitz.ends_at!, mult: Number(settings.data?.blitz_multiplier ?? 2) }
+    : null;
 
   const industryCounts = new Map<string, number>();
   for (const r of industries.data ?? []) industryCounts.set(r.industry!, (industryCounts.get(r.industry!) ?? 0) + 1);
@@ -45,6 +53,8 @@ export default async function CallPage({ searchParams }: PageProps<"/call">) {
       lastOffer={lastOffer.data?.offer ?? null}
       undoMinutes={settings.data?.undo_window_minutes ?? 10}
       dailyMin={settings.data?.streak_min_calls ?? 20}
+      blitz={myBlitz}
+      quest={quest.data ?? null}
     />
   );
 }

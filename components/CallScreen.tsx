@@ -9,6 +9,7 @@ import {
 } from "@/lib/game";
 import type { Database } from "@/lib/database.types";
 import { UndoButton } from "@/components/Feed";
+import { fmtClock, useCountdown } from "@/components/useCountdown";
 
 type Rule = { type: ActivityType; points: number; usd_step: number | null; step_points: number };
 type Stats = Database["public"]["Views"]["v_daily_stats"]["Row"] | null;
@@ -28,6 +29,8 @@ export function CallScreen(props: {
   lastOffer: OfferType | null;
   undoMinutes: number;
   dailyMin: number;
+  blitz: { endsAt: string; mult: number } | null;
+  quest: { title: string | null; progress: number | null; target: number | null; done: boolean | null } | null;
 }) {
   const { me, rules, stats } = props;
   const router = useRouter();
@@ -90,6 +93,7 @@ export function CallScreen(props: {
     });
   }
 
+  const mult = props.blitz ? props.blitz.mult : 1;
   const dials = stats?.dials ?? 0;
   const progress = Math.min(100, (dials / props.dailyMin) * 100);
 
@@ -107,6 +111,13 @@ export function CallScreen(props: {
           </div>
         </div>
       </div>
+
+      {props.blitz && <BlitzStrip endsAt={props.blitz.endsAt} mult={props.blitz.mult} />}
+      {props.quest && (
+        <p className="mb-3 truncate text-xs text-muted">
+          🎯 Квест: <b className="text-text">{props.quest.title}</b> · {props.quest.done ? "✓ выполнен" : `${props.quest.progress}/${props.quest.target}`}
+        </p>
+      )}
 
       {/* Лид */}
       <section className="mb-4 rounded-3xl border border-border bg-surface p-4">
@@ -156,7 +167,7 @@ export function CallScreen(props: {
               <span className={big ? "text-3xl" : "text-2xl"}>{a.icon}</span>
               <span className="min-w-0 flex-1">
                 <span className="block text-[15px] font-bold leading-tight">{a.label}</span>
-                <span className="font-display tabular text-sm text-muted">+{r?.points ?? 0}{a.type === "deal" ? "+" : ""}</span>
+                <span className="font-display tabular text-sm text-muted">+{Math.round((r?.points ?? 0) * mult)}{a.type === "deal" ? "+" : ""}</span>
               </span>
             </button>
           );
@@ -214,6 +225,17 @@ export function CallScreen(props: {
         </div>
       )}
     </main>
+  );
+}
+
+function BlitzStrip({ endsAt, mult }: { endsAt: string; mult: number }) {
+  const left = useCountdown(endsAt);
+  if (left === 0) return null;
+  return (
+    <a href="/blitz" className="mb-3 flex items-center justify-between rounded-2xl bg-gradient-to-r from-[#f97316] to-[#e11d48] px-4 py-2 text-white">
+      <span className="font-display font-bold uppercase">⚡ Блиц ×{mult}</span>
+      <span className="font-display tabular text-xl">{fmtClock(left)}</span>
+    </a>
   );
 }
 

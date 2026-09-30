@@ -63,7 +63,7 @@ begin
       day_start := ((now() at time zone p.timezone)::date - d)::timestamp at time zone p.timezone;
       -- пропускаем нерабочие дни игрока
       continue when extract(isodow from day_start at time zone p.timezone)::smallint = any (p.off_days);
-      n := 12 + floor(random() * 22)::int;  -- наборов за день
+      n := 16 + floor(random() * 24)::int;  -- наборов за день
       for k in 1..n loop
         ts := day_start + interval '9 hours' + (random() * interval '8 hours');
         lid := lead_ids[1 + floor(random() * array_length(lead_ids, 1))::int];
@@ -98,6 +98,13 @@ begin
               (500 + floor(random() * 30) * 100), ts + interval '3 days');
     end loop;
   end loop;
+
+  -- цели недели и наказание за прошлую неделю
+  insert into weekly_goals (player_id, week_start, target_points, target_meetings)
+  select pl.id, w::date, 250 + floor(random() * 150)::int, 2
+  from players pl, generate_series(date_trunc('week', now()) - interval '21 days', date_trunc('week', now()), interval '7 days') w;
+  insert into penalties (week_start, text, set_by)
+  values (date_trunc('week', now())::date - 7, 'Проигравший записывает видео-отзыв о победителе 🎬', (select id from players order by created_at limit 1));
 
   insert into month_goals (month, metric, target)
   values (date_trunc('month', now())::date, 'points', 3000)

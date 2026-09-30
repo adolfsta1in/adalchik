@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { Feed, type FeedItem } from "@/components/Feed";
 import { ScoreBoard } from "@/components/ScoreBoard";
+import { BlitzBanner } from "@/components/BlitzBanner";
+import { WeeklyGoal } from "@/components/WeeklyGoal";
 import { fmtUsd, plural, type Player } from "@/lib/game";
+import { gameState, localsFor } from "@/lib/game-state";
 import { getSession } from "@/lib/session";
 
 export default async function ArenaPage() {
@@ -9,13 +12,9 @@ export default async function ArenaPage() {
   const players = [me, ...(rival ? [rival] : [])];
 
   // У каждого игрока своя локальная неделя и свой «сегодня»
-  const locals = await Promise.all(
-    players.map(async (p) =>
-      p.id === me.id ? today : (await supabase.rpc("player_today", { p_player: p.id }).single()).data!,
-    ),
-  );
+  const locals = await localsFor(supabase, players);
 
-  const [weekRows, dayRows, month, feed, settings] = await Promise.all([
+  const [weekRows, dayRows, month, feed, settings, game] = await Promise.all([
     Promise.all(
       players.map((p, i) =>
         supabase.from("v_weekly_scores").select("points").eq("player_id", p.id).eq("week_start", locals[i].week_start!).maybeSingle(),
@@ -32,9 +31,12 @@ export default async function ArenaPage() {
       .select("id, player_id, type, points, created_at, deal_value, void_kind, offer, leads(company)")
       .or("void_kind.is.null,void_kind.eq.late")
       .order("created_at", { ascending: false })
-      .limit(40),
-    supabase.from("app_settings").select("undo_window_minutes").single(),
+      .limit(30),
+    supabase.from("app_settings").select("undo_window_minutes, quest_bonus").single(),
+    gameState(supabase, players, locals),
   ]);
+  const weekday = new Date(today.local_date! + "T00:00:00Z").getUTCDay(); // 0 = вс
+  const quest = game.quests[0];
 
   const scores = players.map((p, i) => ({ player: p, points: weekRows[i].data?.points ?? 0 }));
   const days = players.map((p, i) => ({ player: p, stats: dayRows[i].data }));
@@ -46,7 +48,72 @@ export default async function ArenaPage() {
         <span className="text-sm text-muted">неделя с {new Date(today.week_start! + "T00:00:00Z").toLocaleDateString("ru-RU", { day: "numeric", month: "short", timeZone: "UTC" })}</span>
       </header>
 
+      {game.blitz ? (
+        <BlitzBanner blitz={game.blitz} meId={me.id} players={players} />
+      ) : null}
+
       <ScoreBoard scores={scores} meId={me.id} />
+
+      {(weekday === 5 || weekday === 6 || weekday === 0) && (
+        <Link href="/week" className="flex items-center justify-between rounded-2xl bg-gold/15 px-4 py-3 font-semibold">
+          <span>🏆 Итоги недели и наказание</span>
+          <span>→</span>
+        </Link>
+      )}
+
+      <section className="grid grid-cols-2 gap-3">
+        {players.map((p, i) => {
+          const st = game.streaks[i];
+          return (
+            <div key={p.id} className="flex items-center gap-2 rounded-2xl bg-surface px-3 py-2.5">
+              <span className={`text-2xl ${st?.current ? "" : "grayscale opacity-50"}`}>🔥</span>
+              <div>
+                <div className="font-display tabular text-2xl font-bold leading-none" style={{ color: p.avatar_color }}>
+                  {st?.current ?? 0}
+                </div>
+                <div className="text-[11px] text-muted">
+                  {plural(st?.current ?? 0, ["день", "дня", "дней"])} подряд · рекорд {st?.best ?? 0}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </section>
+
+      {quest && (
+        <section className="rounded-2xl border border-border bg-surface p-4">
+          <div className="mb-1 flex items-baseline justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-muted">Квест дня · +{settings.data?.quest_bonus ?? 15}</span>
+            {quest.done && <span className="text-sm font-bold text-good">выполнен ✓</span>}
+          </div>
+          <div className="font-bold">{quest.title}</div>
+          <p className="mb-3 text-sm text-muted">{quest.description}</p>
+          <div className="space-y-1.5">
+            {players.map((p, i) => {
+              const q = game.quests[i];
+              const pct = q ? Math.round((q.progress! / q.target!) * 100) : 0;
+              return (
+                <div key={p.id} className="flex items-center gap-2 text-xs">
+                  <span className="w-14 truncate font-semibold">{p.name}</span>
+                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-surface-2">
+                    <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: p.avatar_color }} />
+                  </div>
+                  <span className="w-10 text-right tabular">{q?.progress ?? 0}/{q?.target ?? 0}</span>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      <WeeklyGoal
+        me={me}
+        players={players}
+        weekStart={today.week_start!}
+        goals={game.goals}
+        points={scores.map((s) => s.points)}
+        isMonday={weekday === 1}
+      />
 
       <MonthGoal data={month.data} players={players} />
 

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PenaltyForm } from "@/components/PenaltyForm";
 import { addDays, weekLabel } from "@/lib/game";
 import { getSession } from "@/lib/session";
 
@@ -8,10 +9,15 @@ export default async function WeekPage({ searchParams }: PageProps<"/week">) {
   const current = today.week_start!;
   const week = typeof sp.w === "string" && /^\d{4}-\d{2}-\d{2}$/.test(sp.w) ? sp.w : current;
 
-  const [{ data: rows }, { data: weeks }] = await Promise.all([
+  const [{ data: rows }, { data: weeks }, { data: goals }, { data: penalty }, { data: meetings }] = await Promise.all([
     supabase.rpc("week_summary", { p_week: week }),
     supabase.from("v_weekly_scores").select("week_start").order("week_start", { ascending: false }).limit(200),
+    supabase.from("weekly_goals").select("*").eq("week_start", week),
+    supabase.from("penalties").select("text").eq("week_start", week).maybeSingle(),
+    supabase.from("activities").select("player_id").eq("week_start", week).eq("type", "meeting_set").is("voided_at", null),
   ]);
+  const goalOf = Object.fromEntries((goals ?? []).map((g) => [g.player_id, g]));
+  const meetingsOf = (id: string) => (meetings ?? []).filter((m) => m.player_id === id).length;
   const weekList = [...new Set((weeks ?? []).map((w) => w.week_start!))];
   if (!weekList.includes(current)) weekList.unshift(current);
 
@@ -19,6 +25,7 @@ export default async function WeekPage({ searchParams }: PageProps<"/week">) {
   const volume = rows?.find((r) => r.volume_winner);
   const growth = rows?.find((r) => r.growth_winner);
   const calibrating = rows?.some((r) => r.calibrating);
+  const loser = volume ? rows?.find((r) => r.player_id !== volume.player_id) : null;
 
   return (
     <main className="space-y-4 px-4 pt-4">
@@ -67,8 +74,28 @@ export default async function WeekPage({ searchParams }: PageProps<"/week">) {
               {r.volume_winner && <span>🏋️</span>}
               {r.growth_winner && <span>📈</span>}
             </div>
+            {goalOf[r.player_id!] && (() => {
+              const g = goalOf[r.player_id!];
+              const ok = r.points! >= g.target_points && meetingsOf(r.player_id!) >= g.target_meetings;
+              return (
+                <div className="mt-2 text-sm">
+                  📌 цель: {g.target_points} оч.{g.target_meetings ? ` и ${g.target_meetings} встр.` : ""} →{" "}
+                  <b className={ok ? "text-good" : "text-muted"}>{ok ? "выполнена ✓" : `${r.points} оч., ${meetingsOf(r.player_id!)} встр.`}</b>
+                </div>
+              );
+            })()}
           </div>
         ))}
+      </section>
+
+      <section className="rounded-2xl border-2 border-bad/40 bg-bad/5 p-4">
+        <div className="mb-1 text-xs font-bold uppercase tracking-wider text-bad">Наказание проигравшему</div>
+        {loser && (
+          <p className="mb-2 text-sm">
+            {closed ? "Проиграл" : "Сейчас проигрывает"}: <b style={{ color: loser.avatar_color! }}>{loser.name}</b>
+          </p>
+        )}
+        <PenaltyForm week={week} text={penalty?.text ?? ""} locked={closed} />
       </section>
 
       <p className="text-xs text-muted">

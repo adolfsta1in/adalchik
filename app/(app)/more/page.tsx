@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ProfileForm } from "@/components/ProfileForm";
 import { SettingsForm } from "@/components/SettingsForm";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -23,6 +24,22 @@ export default async function MorePage() {
   return (
     <main className="space-y-6 px-4 pt-4">
       <h1 className="font-display text-2xl font-bold uppercase tracking-wide">Ещё</h1>
+
+      <nav className="grid grid-cols-2 gap-2">
+        {[
+          { href: "/blitz", icon: "⚡", label: "Power Hour" },
+          { href: "/seasons", icon: "👑", label: "Сезоны" },
+          { href: "/achievements", icon: "🎖️", label: "Достижения" },
+          { href: "/analytics", icon: "📊", label: "Аналитика" },
+          { href: "/objections", icon: "🛡️", label: "Возражения и скрипты" },
+          { href: "/week", icon: "🏆", label: "Итоги недель" },
+        ].map((l) => (
+          <Link key={l.href} href={l.href} className="flex items-center gap-2 rounded-2xl bg-surface p-4 font-semibold active:scale-[0.98]">
+            <span className="text-2xl">{l.icon}</span>
+            {l.label}
+          </Link>
+        ))}
+      </nav>
 
       <Section title="Профиль">
         <ProfileForm me={me} />

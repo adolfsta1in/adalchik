@@ -23,18 +23,37 @@ export type Database = {
           }
         },"public": {
           Tables: {
-            "activities": {
+            "achievements": {
                   Row: {
-                    "created_at": string,"deal_value": number | null,"id": string,"industry": string | null,"lead_id": string | null,"local_date": string,"local_hour": number,"note": string | null,"objection_id": string | null,"offer": Database["public"]['Enums']["offer_type"] | null,"player_id": string,"points": number,"script_id": string | null,"type": Database["public"]['Enums']["activity_type"],"void_kind": string | null,"voided_at": string | null,"week_start": string
+                    "code": string,"description": string,"icon": string,"sort": number,"title": string
                   }
                   Insert: {
-                    "created_at"?: string,"deal_value"?: number | null,"id"?: string,"industry"?: string | null,"lead_id"?: string | null,"local_date"?: string,"local_hour"?: number,"note"?: string | null,"objection_id"?: string | null,"offer"?: Database["public"]['Enums']["offer_type"] | null,"player_id"?: string,"points"?: number,"script_id"?: string | null,"type": Database["public"]['Enums']["activity_type"],"void_kind"?: string | null,"voided_at"?: string | null,"week_start"?: string
+                    "code": string,"description": string,"icon": string,"sort"?: number,"title": string
                   }
                   Update: {
-                    "created_at"?: string,"deal_value"?: number | null,"id"?: string,"industry"?: string | null,"lead_id"?: string | null,"local_date"?: string,"local_hour"?: number,"note"?: string | null,"objection_id"?: string | null,"offer"?: Database["public"]['Enums']["offer_type"] | null,"player_id"?: string,"points"?: number,"script_id"?: string | null,"type"?: Database["public"]['Enums']["activity_type"],"void_kind"?: string | null,"voided_at"?: string | null,"week_start"?: string
+                    "code"?: string,"description"?: string,"icon"?: string,"sort"?: number,"title"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"activities": {
+                  Row: {
+                    "blitz_id": string | null,"created_at": string,"deal_value": number | null,"id": string,"industry": string | null,"lead_id": string | null,"local_date": string,"local_hour": number,"multiplier": number,"note": string | null,"objection_id": string | null,"offer": Database["public"]['Enums']["offer_type"] | null,"player_id": string,"points": number,"script_id": string | null,"type": Database["public"]['Enums']["activity_type"],"void_kind": string | null,"voided_at": string | null,"week_start": string,"check_achievements": undefined | null
+                  }
+                  Insert: {
+                    "blitz_id"?: string | null,"created_at"?: string,"deal_value"?: number | null,"id"?: string,"industry"?: string | null,"lead_id"?: string | null,"local_date"?: string,"local_hour"?: number,"multiplier"?: number,"note"?: string | null,"objection_id"?: string | null,"offer"?: Database["public"]['Enums']["offer_type"] | null,"player_id"?: string,"points"?: number,"script_id"?: string | null,"type": Database["public"]['Enums']["activity_type"],"void_kind"?: string | null,"voided_at"?: string | null,"week_start"?: string
+                  }
+                  Update: {
+                    "blitz_id"?: string | null,"created_at"?: string,"deal_value"?: number | null,"id"?: string,"industry"?: string | null,"lead_id"?: string | null,"local_date"?: string,"local_hour"?: number,"multiplier"?: number,"note"?: string | null,"objection_id"?: string | null,"offer"?: Database["public"]['Enums']["offer_type"] | null,"player_id"?: string,"points"?: number,"script_id"?: string | null,"type"?: Database["public"]['Enums']["activity_type"],"void_kind"?: string | null,"voided_at"?: string | null,"week_start"?: string
                   }
                   Relationships: [
                     {
+      foreignKeyName: "activities_blitz_id_fkey"
+      columns: ["blitz_id"]
+isOneToOne: false
+      referencedRelation: "blitz_sessions"
+      referencedColumns: ["id"]
+    },{
       foreignKeyName: "activities_lead_id_fkey"
       columns: ["lead_id"]
 isOneToOne: false
@@ -72,6 +91,50 @@ isOneToOne: false
                   }
                   Relationships: [
                     
+                  ]
+                },"blitz_participants": {
+                  Row: {
+                    "blitz_id": string,"joined_at": string,"player_id": string
+                  }
+                  Insert: {
+                    "blitz_id": string,"joined_at"?: string,"player_id": string
+                  }
+                  Update: {
+                    "blitz_id"?: string,"joined_at"?: string,"player_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "blitz_participants_blitz_id_fkey"
+      columns: ["blitz_id"]
+isOneToOne: false
+      referencedRelation: "blitz_sessions"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "blitz_participants_player_id_fkey"
+      columns: ["player_id"]
+isOneToOne: false
+      referencedRelation: "players"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"blitz_sessions": {
+                  Row: {
+                    "cancelled_at": string | null,"ends_at": string,"id": string,"started_at": string,"started_by": string
+                  }
+                  Insert: {
+                    "cancelled_at"?: string | null,"ends_at"?: string,"id"?: string,"started_at"?: string,"started_by": string
+                  }
+                  Update: {
+                    "cancelled_at"?: string | null,"ends_at"?: string,"id"?: string,"started_at"?: string,"started_by"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "blitz_sessions_started_by_fkey"
+      columns: ["started_by"]
+isOneToOne: false
+      referencedRelation: "players"
+      referencedColumns: ["id"]
+    }
                   ]
                 },"leads": {
                   Row: {
@@ -124,6 +187,56 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"penalties": {
+                  Row: {
+                    "created_at": string,"set_by": string,"text": string,"week_start": string
+                  }
+                  Insert: {
+                    "created_at"?: string,"set_by"?: string,"text": string,"week_start": string
+                  }
+                  Update: {
+                    "created_at"?: string,"set_by"?: string,"text"?: string,"week_start"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "penalties_set_by_fkey"
+      columns: ["set_by"]
+isOneToOne: false
+      referencedRelation: "players"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"player_achievements": {
+                  Row: {
+                    "activity_id": string | null,"code": string,"earned_at": string,"player_id": string,"seen": boolean
+                  }
+                  Insert: {
+                    "activity_id"?: string | null,"code": string,"earned_at"?: string,"player_id": string,"seen"?: boolean
+                  }
+                  Update: {
+                    "activity_id"?: string | null,"code"?: string,"earned_at"?: string,"player_id"?: string,"seen"?: boolean
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "player_achievements_activity_id_fkey"
+      columns: ["activity_id"]
+isOneToOne: false
+      referencedRelation: "activities"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "player_achievements_code_fkey"
+      columns: ["code"]
+isOneToOne: false
+      referencedRelation: "achievements"
+      referencedColumns: ["code"]
+    },{
+      foreignKeyName: "player_achievements_player_id_fkey"
+      columns: ["player_id"]
+isOneToOne: false
+      referencedRelation: "players"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"players": {
                   Row: {
                     "avatar_color": string,"created_at": string,"email": string,"id": string,"name": string,"off_days": (number)[],"region_label": string,"telegram_chat_id": number | null,"timezone": string,"user_id": string | null
@@ -133,6 +246,50 @@ isOneToOne: false
                   }
                   Update: {
                     "avatar_color"?: string,"created_at"?: string,"email"?: string,"id"?: string,"name"?: string,"off_days"?: (number)[],"region_label"?: string,"telegram_chat_id"?: number | null,"timezone"?: string,"user_id"?: string | null
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"quest_completions": {
+                  Row: {
+                    "created_at": string,"ledger_id": number | null,"player_id": string,"quest_date": string,"quest_id": number
+                  }
+                  Insert: {
+                    "created_at"?: string,"ledger_id"?: number | null,"player_id": string,"quest_date": string,"quest_id": number
+                  }
+                  Update: {
+                    "created_at"?: string,"ledger_id"?: number | null,"player_id"?: string,"quest_date"?: string,"quest_id"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "quest_completions_ledger_id_fkey"
+      columns: ["ledger_id"]
+isOneToOne: false
+      referencedRelation: "score_ledger"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "quest_completions_player_id_fkey"
+      columns: ["player_id"]
+isOneToOne: false
+      referencedRelation: "players"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "quest_completions_quest_id_fkey"
+      columns: ["quest_id"]
+isOneToOne: false
+      referencedRelation: "quests"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"quests": {
+                  Row: {
+                    "active": boolean,"description": string,"hour_limit": number | null,"id": number,"kind": string,"target": number,"title": string,"types": (Database["public"]['Enums']["activity_type"])[]
+                  }
+                  Insert: {
+                    "active"?: boolean,"description": string,"hour_limit"?: number | null,"id": number,"kind": string,"target": number,"title": string,"types": (Database["public"]['Enums']["activity_type"])[]
+                  }
+                  Update: {
+                    "active"?: boolean,"description"?: string,"hour_limit"?: number | null,"id"?: number,"kind"?: string,"target"?: number,"title"?: string,"types"?: (Database["public"]['Enums']["activity_type"])[]
                   }
                   Relationships: [
                     
@@ -200,6 +357,25 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"weekly_goals": {
+                  Row: {
+                    "created_at": string,"player_id": string,"target_meetings": number,"target_points": number,"week_start": string
+                  }
+                  Insert: {
+                    "created_at"?: string,"player_id"?: string,"target_meetings"?: number,"target_points": number,"week_start": string
+                  }
+                  Update: {
+                    "created_at"?: string,"player_id"?: string,"target_meetings"?: number,"target_points"?: number,"week_start"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "weekly_goals_player_id_fkey"
+      columns: ["player_id"]
+isOneToOne: false
+      referencedRelation: "players"
+      referencedColumns: ["id"]
+    }
+                  ]
                 }
           }
           Views: {
@@ -226,14 +402,42 @@ isOneToOne: false
                 }
           }
           Functions: {
-            "calc_points":
+            "active_blitz":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "cancelled_at": string | null,
+"ends_at": string,
+"id": string,
+"started_at": string,
+"started_by": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "blitz_sessions"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"blitz_score":
+{ Args: { "p_id": string }; Returns: {
+              "actions": number,"joined": boolean,"player_id": string,"points": number
+            }[]
+                           },
+"calc_points":
 { Args: { "p_deal_value": number,"p_type": Database["public"]['Enums']["activity_type"] }; Returns: number
+                           },
+"check_achievements":
+{ Args: { "a": Database["public"]['Tables']["activities"]['Row'] }; Returns: undefined
                            },
 "current_player_id":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
+"grant_achievement":
+{ Args: { "p_activity": string,"p_code": string,"p_player": string }; Returns: undefined
+                           },
 "is_player":
 { Args: Record<PropertyKey, never>; Returns: boolean
+                           },
+"join_blitz":
+{ Args: { "p_id": string }; Returns: undefined
                            },
 "lead_status_rank":
 { Args: { "s": Database["public"]['Enums']["lead_status"] }; Returns: number
@@ -249,13 +453,59 @@ isOneToOne: false
 "player_local":
 { Args: { "p_at": string,"p_player": string }; Returns: Record<string, unknown>
                            },
+"player_streak":
+{ Args: { "p_player": string }; Returns: {
+              "best": number,"current": number,"min_calls": number,"today_dials": number,"today_done": boolean
+            }[]
+                           },
 "player_today":
 { Args: { "p_player": string }; Returns: {
               "local_date": string,"week_start": string
             }[]
                            },
+"quest_for_date":
+{ Args: { "p_date": string }; Returns: {
+              "active": boolean,
+"description": string,
+"hour_limit": number | null,
+"id": number,
+"kind": string,
+"target": number,
+"title": string,
+"types": (Database["public"]['Enums']["activity_type"])[]
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "quests"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"quest_progress":
+{ Args: { "p_date": string,"p_player": string }; Returns: {
+              "description": string,"done": boolean,"progress": number,"quest_id": number,"target": number,"title": string
+            }[]
+                           },
 "recompute_lead_status":
 { Args: { "p_lead": string }; Returns: undefined
+                           },
+"season_list":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "champion_id": string,"month": string,"total": number
+            }[]
+                           },
+"season_summary":
+{ Args: { "p_month": string }; Returns: {
+              "avatar_color": string,"champion": boolean,"closed": boolean,"deal_sum": number,"deals": number,"meetings": number,"name": string,"player_id": string,"points": number
+            }[]
+                           },
+"start_blitz":
+{ Args: Record<PropertyKey, never>; Returns: string
+                           },
+"stop_blitz":
+{ Args: { "p_id": string }; Returns: undefined
+                           },
+"sync_quest":
+{ Args: { "p_date": string,"p_player": string }; Returns: undefined
                            },
 "undo_activity":
 { Args: { "p_id": string }; Returns: string
