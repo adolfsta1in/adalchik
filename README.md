@@ -47,22 +47,14 @@ supabase db push                                    # применит supabase/
 
 Миграция `…_players.sql` создаёт двух игроков: Адис (`sa13367@auca.kg`, Бишкек) и Алинур (`alinur2003m@gmail.com`, Найроби). Имя, пояс, регион, цвет и выходные каждый меняет у себя в «Ещё → Профиль».
 
-### 1.2. Настроить вход (Authentication)
+### 1.2. Вход
 
-1. **Authentication → URL Configuration**
-   - Site URL: `https://<ваш-домен>.vercel.app`
-   - Redirect URLs: `https://<ваш-домен>.vercel.app/**` (и `http://localhost:3000/**` для разработки)
-2. **Authentication → Email Templates**: в шаблонах **Magic Link** и **Confirm signup** вставьте текст с кодом, чтобы вход работал внутри установленного на телефон приложения:
+Вход по **email и паролю**, без писем и подтверждений.
 
-   ```html
-   <h2>Cold Call Arena</h2>
-   <p>Код для входа: <strong style="font-size:28px;letter-spacing:4px">{{ .Token }}</strong></p>
-   <p>Введите код в приложении или нажмите:</p>
-   <p><a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email">Войти в арену</a></p>
-   ```
-
-3. **Важно про письма.** Встроенная почта Supabase отправляет всего несколько писем в час. Для нормальной работы подключите свой SMTP: **Project Settings → Authentication → SMTP**. Подойдёт бесплатный Resend или Brevo.
-4. Вход закрыт whitelist-ом трижды: переменная `ALLOWED_EMAILS` перед отправкой кода, проверка в `proxy.ts` и триггер в БД, который не даёт создать пользователя с email вне таблицы `players`.
+- **Первый вход:** на экране входа вкладка «Первый вход» → свой email + пароль. Аккаунт создаётся сразу подтверждённым. Задать пароль можно **один раз** на email: сделайте это оба сразу после деплоя.
+- **Дальше:** вкладка «Вход».
+- **Забыли пароль:** Supabase → Authentication → Users → пользователь → «Reset password» / «Delete user». Затем в SQL Editor выполните `update players set password_set = false where email = '...';` и задайте пароль заново через «Первый вход».
+- Whitelist работает трижды: переменная `ALLOWED_EMAILS` на сервере, проверка в `proxy.ts` и триггер в БД, который не даёт создать пользователя с email вне таблицы `players`.
 
 ---
 
@@ -73,10 +65,11 @@ supabase db push                                    # применит supabase/
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase → Project Settings → API → Project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | там же, `anon` `public` key |
 | `ALLOWED_EMAILS` | `sa13367@auca.kg,alinur2003m@gmail.com` |
-| `NEXT_PUBLIC_SITE_URL` | адрес приложения, например `https://cold-call-arena.vercel.app` |
+| `NEXT_PUBLIC_SITE_URL` | адрес приложения: `https://adalchik-arena.vercel.app` |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Project Settings → API → `service_role` key. **Только без префикса `NEXT_PUBLIC_`**: нужен серверу для первого задания пароля и в браузер не попадает |
 
 Для локального запуска скопируйте `.env.example` в `.env.local` и заполните.
-`service_role` key приложению **не нужен**: всё работает через RLS от имени вошедшего игрока. Не добавляйте его в Vercel.
+Все данные читаются и пишутся через RLS от имени вошедшего игрока. Service role используется только в `app/login/actions.ts` для создания аккаунта с паролем.
 
 ---
 
@@ -84,8 +77,8 @@ supabase db push                                    # применит supabase/
 
 1. Vercel → **Add New → Project** → импортируйте репозиторий `adolfsta1in/adalchik`.
 2. Framework определится сам (Next.js). Build command и output менять не нужно.
-3. **Environment Variables**: добавьте 4 переменные из таблицы выше.
-4. **Deploy**. После первого деплоя впишите полученный домен в `NEXT_PUBLIC_SITE_URL` (Vercel) и в Site URL / Redirect URLs (Supabase), затем сделайте Redeploy.
+3. **Environment Variables**: добавьте 5 переменных из таблицы выше.
+4. **Deploy**.
 
 Каждый пуш в `main` деплоится автоматически.
 
@@ -93,7 +86,7 @@ supabase db push                                    # применит supabase/
 
 ## 4. Установить на телефон (PWA)
 
-- **iPhone (Safari):** откройте сайт → «Поделиться» → «На экран „Домой“». Войдите в установленном приложении: введите email, затем **код из письма**. Ссылка из письма откроется в Safari, а не в приложении. Системные уведомления на iPhone работают только в приложении с главного экрана (iOS 16.4+): колокольчик 🔔 на Арене → «Включить системные уведомления».
+- **iPhone (Safari):** откройте сайт → «Поделиться» → «На экран „Домой“» и войдите уже в установленном приложении по email и паролю. Системные уведомления на iPhone работают только в приложении с главного экрана (iOS 16.4+): колокольчик 🔔 на Арене → «Включить системные уведомления».
 - **Android (Chrome):** меню ⋮ → «Установить приложение» / «Добавить на главный экран».
 
 ---
@@ -113,6 +106,7 @@ npm run db:reset        # миграции + seed: 90 лидов на игрок
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<ANON_KEY из вывода `supabase status`>
+SUPABASE_SERVICE_ROLE_KEY=<SERVICE_ROLE_KEY из вывода `supabase status`>
 NEXT_PUBLIC_SITE_URL=http://127.0.0.1:3000
 ```
 
@@ -120,7 +114,6 @@ NEXT_PUBLIC_SITE_URL=http://127.0.0.1:3000
 npm run dev             # http://127.0.0.1:3000
 ```
 
-Письма с кодами локально приходят в Mailpit: http://127.0.0.1:54324.
 Чтобы работать с облачной БД, удалите `.env.development.local`.
 
 Полезное: `npm run typecheck`, `npm run lint`, `npm run db:types` (перегенерировать типы после изменения схемы).
@@ -131,8 +124,7 @@ npm run dev             # http://127.0.0.1:3000
 
 ```
 app/
-  login/                 вход: email → код / ссылка
-  auth/confirm/          обработка ссылки из письма
+  login/                 вход по email и паролю, первый вход с заданием пароля
   (app)/                 защищённая часть с нижней навигацией
     page.tsx             Арена
     call/                Звоню

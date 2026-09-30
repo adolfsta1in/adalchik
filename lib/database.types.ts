@@ -270,13 +270,13 @@ isOneToOne: false
                   ]
                 },"players": {
                   Row: {
-                    "avatar_color": string,"created_at": string,"email": string,"id": string,"name": string,"off_days": (number)[],"region_label": string,"timezone": string,"user_id": string | null
+                    "avatar_color": string,"created_at": string,"email": string,"id": string,"name": string,"off_days": (number)[],"password_set": boolean,"region_label": string,"timezone": string,"user_id": string | null
                   }
                   Insert: {
-                    "avatar_color"?: string,"created_at"?: string,"email": string,"id"?: string,"name": string,"off_days"?: (number)[],"region_label"?: string,"timezone"?: string,"user_id"?: string | null
+                    "avatar_color"?: string,"created_at"?: string,"email": string,"id"?: string,"name": string,"off_days"?: (number)[],"password_set"?: boolean,"region_label"?: string,"timezone"?: string,"user_id"?: string | null
                   }
                   Update: {
-                    "avatar_color"?: string,"created_at"?: string,"email"?: string,"id"?: string,"name"?: string,"off_days"?: (number)[],"region_label"?: string,"timezone"?: string,"user_id"?: string | null
+                    "avatar_color"?: string,"created_at"?: string,"email"?: string,"id"?: string,"name"?: string,"off_days"?: (number)[],"password_set"?: boolean,"region_label"?: string,"timezone"?: string,"user_id"?: string | null
                   }
                   Relationships: [
                     

@@ -14,7 +14,6 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
       </div>
       {error === "forbidden" && <p className="mb-4 rounded-xl bg-bad/15 p-3 text-sm text-bad">Этот аккаунт не допущен в арену.</p>}
       {error === "noplayer" && <p className="mb-4 rounded-xl bg-bad/15 p-3 text-sm text-bad">Профиль игрока не найден. Проверьте миграции.</p>}
-      {error === "link" && <p className="mb-4 rounded-xl bg-bad/15 p-3 text-sm text-bad">Ссылка устарела. Запросите новый код.</p>}
       <LoginForm />
     </main>
   );
