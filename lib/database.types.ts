@@ -168,6 +168,37 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"notifications": {
+                  Row: {
+                    "activity_id": string | null,"actor_id": string | null,"body": string | null,"created_at": string,"id": number,"kind": string,"link": string | null,"player_id": string,"read_at": string | null,"title": string
+                  }
+                  Insert: {
+                    "activity_id"?: string | null,"actor_id"?: string | null,"body"?: string | null,"created_at"?: string,"id"?: number,"kind": string,"link"?: string | null,"player_id": string,"read_at"?: string | null,"title": string
+                  }
+                  Update: {
+                    "activity_id"?: string | null,"actor_id"?: string | null,"body"?: string | null,"created_at"?: string,"id"?: number,"kind"?: string,"link"?: string | null,"player_id"?: string,"read_at"?: string | null,"title"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "notifications_activity_id_fkey"
+      columns: ["activity_id"]
+isOneToOne: false
+      referencedRelation: "activities"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "notifications_actor_id_fkey"
+      columns: ["actor_id"]
+isOneToOne: false
+      referencedRelation: "players"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "notifications_player_id_fkey"
+      columns: ["player_id"]
+isOneToOne: false
+      referencedRelation: "players"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"objections": {
                   Row: {
                     "author_id": string,"created_at": string,"id": string,"text": string
@@ -239,13 +270,13 @@ isOneToOne: false
                   ]
                 },"players": {
                   Row: {
-                    "avatar_color": string,"created_at": string,"email": string,"id": string,"name": string,"off_days": (number)[],"region_label": string,"telegram_chat_id": number | null,"timezone": string,"user_id": string | null
+                    "avatar_color": string,"created_at": string,"email": string,"id": string,"name": string,"off_days": (number)[],"region_label": string,"timezone": string,"user_id": string | null
                   }
                   Insert: {
-                    "avatar_color"?: string,"created_at"?: string,"email": string,"id"?: string,"name": string,"off_days"?: (number)[],"region_label"?: string,"telegram_chat_id"?: number | null,"timezone"?: string,"user_id"?: string | null
+                    "avatar_color"?: string,"created_at"?: string,"email": string,"id"?: string,"name": string,"off_days"?: (number)[],"region_label"?: string,"timezone"?: string,"user_id"?: string | null
                   }
                   Update: {
-                    "avatar_color"?: string,"created_at"?: string,"email"?: string,"id"?: string,"name"?: string,"off_days"?: (number)[],"region_label"?: string,"telegram_chat_id"?: number | null,"timezone"?: string,"user_id"?: string | null
+                    "avatar_color"?: string,"created_at"?: string,"email"?: string,"id"?: string,"name"?: string,"off_days"?: (number)[],"region_label"?: string,"timezone"?: string,"user_id"?: string | null
                   }
                   Relationships: [
                     
@@ -460,6 +491,9 @@ isOneToOne: false
 "next_lead_status":
 { Args: { "cur": Database["public"]['Enums']["lead_status"],"t": Database["public"]['Enums']["activity_type"] }; Returns: Database["public"]['Enums']["lead_status"]
                            },
+"notify":
+{ Args: { "p_activity"?: string,"p_actor": string,"p_body"?: string,"p_kind": string,"p_link"?: string,"p_title": string,"p_to": string }; Returns: undefined
+                           },
 "objection_stats":
 { Args: { "p_from": string,"p_to": string }; Returns: {
               "objection_id": string,"per_region": Json,"scripts": number,"text": string,"total": number
@@ -502,6 +536,9 @@ isOneToOne: false
                            },
 "recompute_lead_status":
 { Args: { "p_lead": string }; Returns: undefined
+                           },
+"rival_of":
+{ Args: { "p_player": string }; Returns: string
                            },
 "script_stats":
 { Args: { "p_from": string,"p_to": string }; Returns: {

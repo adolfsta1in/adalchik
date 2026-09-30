@@ -110,3 +110,8 @@ begin
   values (date_trunc('month', now())::date, 'points', 3000)
   on conflict (month) do nothing;
 end $$;
+
+-- уведомления демо-данных: время как у действий, всё кроме последних 5 прочитано
+update notifications n set created_at = a.created_at from activities a where n.activity_id = a.id;
+update notifications set read_at = now()
+where id not in (select id from notifications order by created_at desc limit 5);

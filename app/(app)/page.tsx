@@ -2,6 +2,8 @@ import Link from "next/link";
 import { Feed, type FeedItem } from "@/components/Feed";
 import { ScoreBoard } from "@/components/ScoreBoard";
 import { BlitzBanner } from "@/components/BlitzBanner";
+import { MorningBrief } from "@/components/MorningBrief";
+import { NotificationBell } from "@/components/NotificationBell";
 import { WeeklyGoal } from "@/components/WeeklyGoal";
 import { fmtUsd, plural, type Player } from "@/lib/game";
 import { gameState, localsFor } from "@/lib/game-state";
@@ -35,6 +37,11 @@ export default async function ArenaPage() {
     supabase.from("app_settings").select("undo_window_minutes, quest_bonus").single(),
     gameState(supabase, players, locals),
   ]);
+  const { count: unread } = await supabase
+    .from("notifications")
+    .select("id", { count: "exact", head: true })
+    .eq("player_id", me.id)
+    .is("read_at", null);
   const weekday = new Date(today.local_date! + "T00:00:00Z").getUTCDay(); // 0 = вс
   const quest = game.quests[0];
 
@@ -45,8 +52,23 @@ export default async function ArenaPage() {
     <main className="space-y-5 px-4 pt-4">
       <header className="flex items-center justify-between">
         <h1 className="font-display text-2xl font-bold uppercase tracking-wide">Арена</h1>
-        <span className="text-sm text-muted">неделя с {new Date(today.week_start! + "T00:00:00Z").toLocaleDateString("ru-RU", { day: "numeric", month: "short", timeZone: "UTC" })}</span>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-muted">неделя с {new Date(today.week_start! + "T00:00:00Z").toLocaleDateString("ru-RU", { day: "numeric", month: "short", timeZone: "UTC" })}</span>
+          <NotificationBell unread={unread ?? 0} />
+        </div>
       </header>
+
+      <MorningBrief
+        date={today.local_date!}
+        name={me.name}
+        quest={quest ? { title: quest.title!, description: quest.description! } : null}
+        myPoints={scores[0].points}
+        rivalPoints={scores[1]?.points ?? null}
+        rivalName={rival?.name ?? null}
+        streak={game.streaks[0]?.current ?? 0}
+        todayDone={game.streaks[0]?.today_done ?? false}
+        minCalls={game.streaks[0]?.min_calls ?? 20}
+      />
 
       {game.blitz ? (
         <BlitzBanner blitz={game.blitz} meId={me.id} players={players} />

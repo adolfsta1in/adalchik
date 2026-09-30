@@ -24,7 +24,6 @@ create table players (
   avatar_color     text not null default '#f97316',
   -- ISO-дни недели (1 = пн … 7 = вс), которые игрок отметил как нерабочие
   off_days         smallint[] not null default '{6,7}',
-  telegram_chat_id bigint unique,
   created_at       timestamptz not null default now()
 );
 

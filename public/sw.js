@@ -1,5 +1,5 @@
 // Cold Call Arena — service worker: статика из кеша, страницы из сети с офлайн-заглушкой.
-const CACHE = "arena-v1";
+const CACHE = "arena-v2";
 const OFFLINE_HTML =
   '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Нет сети</title>' +
   '<body style="font-family:system-ui;background:#0c0d10;color:#f3f3f0;display:grid;place-items:center;height:100vh;margin:0;text-align:center">' +
@@ -35,4 +35,21 @@ self.addEventListener("fetch", (e) => {
       fetch(req).catch(() => new Response(OFFLINE_HTML, { headers: { "Content-Type": "text/html; charset=utf-8" } })),
     );
   }
+});
+
+// Клик по системному уведомлению — открыть или сфокусировать приложение
+self.addEventListener("notificationclick", (e) => {
+  e.notification.close();
+  const link = (e.notification.data && e.notification.data.link) || "/";
+  e.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((list) => {
+      for (const c of list) {
+        if ("focus" in c) {
+          c.navigate(link);
+          return c.focus();
+        }
+      }
+      return self.clients.openWindow(link);
+    }),
+  );
 });

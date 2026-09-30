@@ -1,5 +1,6 @@
 import { AchievementPopup } from "@/components/AchievementPopup";
 import { BottomNav } from "@/components/BottomNav";
+import { NotificationToaster } from "@/components/NotificationToaster";
 import { RealtimeRefresh } from "@/components/RealtimeRefresh";
 import { getSession } from "@/lib/session";
 
@@ -19,6 +20,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
       {children}
       <BottomNav />
       <RealtimeRefresh />
+      <NotificationToaster playerId={me.id} color={me.avatar_color} />
       {items.length > 0 && <AchievementPopup key={items.map((i) => i.code).join()} items={items} playerId={me.id} color={me.avatar_color} />}
     </div>
   );

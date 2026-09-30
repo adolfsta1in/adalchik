@@ -1,36 +1,157 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Cold Call Arena
 
-## Getting Started
+Соревновательный трекер холодных звонков для двух игроков: Бишкек (UTC+6) против Найроби (UTC+3).
+Next.js 16 (App Router) + TypeScript + Tailwind 4, Supabase (Postgres, Auth, Realtime), PWA, деплой на Vercel.
 
-First, run the development server:
+Приложение устроено так:
+
+- **Арена**: счёт недели «я против брата», серии, квест дня, цели недели, общая цель месяца, сегодняшние цифры и живая лента.
+- **Звоню**: карточка лида, крупные кнопки действий, выбор отрасли и оффера. Действие записывается в 1–2 тапа, отменить можно в течение 10 минут.
+- **Лиды**: поиск, фильтр по статусу, карточка с историей, импорт CSV с сопоставлением колонок.
+- **Итоги**: трофеи «Объём» и «Рост» (с калибровкой), цели недели, наказание проигравшему, архив недель.
+- **Ещё**: Power Hour (блиц ×2), сезоны, достижения, аналитика, возражения и скрипты, профиль, правила очков, тема.
+- **Уведомления** 🔔: встречи, КП и сделки брата, его достижения, обгон в счёте, приглашение на блиц. Приходят вживую через Realtime и системными уведомлениями, если их разрешить.
+- **Брифинг дня**: при первом открытии за день квест, счёт недели и серия.
+
+## Как считаются очки (честно при разных рынках)
+
+- Все очки лежат в журнале `score_ledger` и считаются в SQL-триггерах, клиент их не присылает. Правила редактируются в «Ещё → Правила» и действуют для новых действий.
+- «День» и «неделя» (пн–вс) считаются по часовому поясу игрока **на момент действия**. Неделя закрывается, когда воскресенье закончилось у обоих.
+- **Объём**: больше очков за неделю.
+- **Рост**: очки недели делятся на среднее игрока за 4 предыдущие недели. Пока истории меньше 2 недель, идёт калибровка, и «Рост» не присуждается никому.
+- «Набор» — это любой результат звонка: `call`, `conversation`, `rejection`, `meeting_set`. «Живой разговор»: `conversation`, `rejection`, `meeting_set`.
+- `meeting_held` возможна только после `meeting_set` по тому же лиду. Статус лида меняется автоматически, а при отмене действия пересчитывается.
+- Отмена в течение 10 минут бесследна. Позже действие остаётся в ленте зачёркнутым с пометкой «отменено».
+- Если игрок назначил встречу со скриптом брата, автор скрипта получает +5 и значок «Учитель».
+
+---
+
+## 1. Supabase
+
+Проект уже создан: `https://cbaoiuqwdxmkyggwwvys.supabase.co`.
+
+### 1.1. Применить миграции
+
+**Вариант А — Supabase CLI (рекомендуется):**
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+brew install supabase/tap/supabase
+supabase login
+supabase link --project-ref cbaoiuqwdxmkyggwwvys   # спросит пароль БД (Project Settings → Database)
+supabase db push                                    # применит supabase/migrations/*.sql
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+**Вариант Б — вручную:** Supabase → SQL Editor. Выполните по очереди все файлы из `supabase/migrations/` в порядке имён.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+> Демо-данные (`supabase/seed.sql`) **не** попадают в продакшен: `db push` их не выполняет. Они нужны только для локальной проверки.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Миграция `…_players.sql` создаёт двух игроков: Адис (`sa13367@auca.kg`, Бишкек) и Алинур (`alinur2003m@gmail.com`, Найроби). Имя, пояс, регион, цвет и выходные каждый меняет у себя в «Ещё → Профиль».
 
-## Learn More
+### 1.2. Настроить вход (Authentication)
 
-To learn more about Next.js, take a look at the following resources:
+1. **Authentication → URL Configuration**
+   - Site URL: `https://<ваш-домен>.vercel.app`
+   - Redirect URLs: `https://<ваш-домен>.vercel.app/**` (и `http://localhost:3000/**` для разработки)
+2. **Authentication → Email Templates**: в шаблонах **Magic Link** и **Confirm signup** вставьте текст с кодом, чтобы вход работал внутри установленного на телефон приложения:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+   ```html
+   <h2>Cold Call Arena</h2>
+   <p>Код для входа: <strong style="font-size:28px;letter-spacing:4px">{{ .Token }}</strong></p>
+   <p>Введите код в приложении или нажмите:</p>
+   <p><a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email">Войти в арену</a></p>
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+3. **Важно про письма.** Встроенная почта Supabase отправляет всего несколько писем в час. Для нормальной работы подключите свой SMTP: **Project Settings → Authentication → SMTP**. Подойдёт бесплатный Resend или Brevo.
+4. Вход закрыт whitelist-ом трижды: переменная `ALLOWED_EMAILS` перед отправкой кода, проверка в `proxy.ts` и триггер в БД, который не даёт создать пользователя с email вне таблицы `players`.
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 2. Переменные окружения
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Переменная | Где взять |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase → Project Settings → API → Project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | там же, `anon` `public` key |
+| `ALLOWED_EMAILS` | `sa13367@auca.kg,alinur2003m@gmail.com` |
+| `NEXT_PUBLIC_SITE_URL` | адрес приложения, например `https://cold-call-arena.vercel.app` |
+
+Для локального запуска скопируйте `.env.example` в `.env.local` и заполните.
+`service_role` key приложению **не нужен**: всё работает через RLS от имени вошедшего игрока. Не добавляйте его в Vercel.
+
+---
+
+## 3. Деплой на Vercel
+
+1. Vercel → **Add New → Project** → импортируйте репозиторий `adolfsta1in/adalchik`.
+2. Framework определится сам (Next.js). Build command и output менять не нужно.
+3. **Environment Variables**: добавьте 4 переменные из таблицы выше.
+4. **Deploy**. После первого деплоя впишите полученный домен в `NEXT_PUBLIC_SITE_URL` (Vercel) и в Site URL / Redirect URLs (Supabase), затем сделайте Redeploy.
+
+Каждый пуш в `main` деплоится автоматически.
+
+---
+
+## 4. Установить на телефон (PWA)
+
+- **iPhone (Safari):** откройте сайт → «Поделиться» → «На экран „Домой“». Войдите в установленном приложении: введите email, затем **код из письма**. Ссылка из письма откроется в Safari, а не в приложении. Системные уведомления на iPhone работают только в приложении с главного экрана (iOS 16.4+): колокольчик 🔔 на Арене → «Включить системные уведомления».
+- **Android (Chrome):** меню ⋮ → «Установить приложение» / «Добавить на главный экран».
+
+---
+
+## 5. Локальная разработка с демо-данными
+
+Нужны Docker (или Colima) и Supabase CLI.
+
+```bash
+npm install
+npm run db:start        # поднимет локальный Supabase в Docker
+npm run db:reset        # миграции + seed: 90 лидов на игрока и 3 недели действий
+```
+
+Создайте `.env.development.local` (перекрывает `.env.local` в режиме dev):
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<ANON_KEY из вывода `supabase status`>
+NEXT_PUBLIC_SITE_URL=http://127.0.0.1:3000
+```
+
+```bash
+npm run dev             # http://127.0.0.1:3000
+```
+
+Письма с кодами локально приходят в Mailpit: http://127.0.0.1:54324.
+Чтобы работать с облачной БД, удалите `.env.development.local`.
+
+Полезное: `npm run typecheck`, `npm run lint`, `npm run db:types` (перегенерировать типы после изменения схемы).
+
+---
+
+## Структура
+
+```
+app/
+  login/                 вход: email → код / ссылка
+  auth/confirm/          обработка ссылки из письма
+  (app)/                 защищённая часть с нижней навигацией
+    page.tsx             Арена
+    call/                Звоню
+    leads/               список, [id], new, import
+    week/ seasons/ achievements/ blitz/ analytics/ objections/ notifications/ more/
+  manifest.ts, icon.tsx, apple-icon.tsx, pwa-icon/[size]   PWA
+components/              клиентские и общие компоненты
+lib/                     supabase-клиенты, сессия, константы игры, типы БД
+proxy.ts                 обновление сессии и whitelist (в Next 16 бывший middleware)
+public/sw.js             service worker: кеш статики, офлайн-заглушка, клики по уведомлениям
+supabase/
+  migrations/            схема, RLS, SQL-функции (очки, итоги, серии, квесты, аналитика, уведомления)
+  seed.sql               демо-данные (только локально)
+```
+
+## Безопасность (RLS)
+
+- Читать данные могут только два игрока (`is_player()`).
+- `activities`: каждый вставляет только свои действия. Изменить или удалить нельзя, отмена идёт только через `undo_activity()`.
+- `score_ledger`, достижения, квесты, блиц и уведомления пишут только SQL-триггеры и функции.
+- Лиды общие: удалить может только владелец и только лида без истории.
+- Правила очков и цели общие: их меняют оба.

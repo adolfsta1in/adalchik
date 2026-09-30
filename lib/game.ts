@@ -42,6 +42,15 @@ export const FEED_VERB: Record<ActivityType, string> = {
   deal: "закрыл сделку",
 };
 
+export const NOTE_ICON: Record<string, string> = {
+  meeting: "📅",
+  deal: "🏆",
+  proposal: "📄",
+  achievement: "🎖️",
+  overtake: "⚡",
+  blitz: "🔥",
+};
+
 export const OFFERS: { value: OfferType; label: string }[] = [
   { value: "website", label: "Сайт" },
   { value: "automation", label: "Автоматизация" },

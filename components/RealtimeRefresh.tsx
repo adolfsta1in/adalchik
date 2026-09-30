@@ -22,6 +22,7 @@ export function RealtimeRefresh() {
       .on("postgres_changes", { event: "*", schema: "public", table: "blitz_sessions" }, refresh)
       .on("postgres_changes", { event: "*", schema: "public", table: "blitz_participants" }, refresh)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "player_achievements" }, refresh)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications" }, refresh)
       .subscribe((status, err) => {
         if (process.env.NODE_ENV !== "production") console.log("[realtime]", status, err?.message ?? "");
       });
