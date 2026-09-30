@@ -43,3 +43,7 @@ next-env.d.ts
 !.env.example
 supabase/.temp
 supabase/.branches
+
+# скриншоты
+Снимок экрана*
+Screenshot*
