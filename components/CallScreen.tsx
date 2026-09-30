@@ -282,7 +282,7 @@ function DetailsSheet(props: {
     props.onSubmit({
       industry,
       offer,
-      deal_value: type === "deal" ? Number(amount) : null,
+      deal_value: type === "deal" ? Number(amount) : type === "proposal" && Number(amount) > 0 ? Number(amount) : null,
       objection_id,
       script_id: script,
       note: note.trim() || null,
@@ -303,12 +303,14 @@ function DetailsSheet(props: {
         <h2 className="mb-1 text-2xl font-bold">{action.icon} {action.label}</h2>
         <p className="mb-4 text-sm text-muted">{lead?.company}</p>
 
-        {type === "deal" && (
+        {(type === "deal" || type === "proposal") && (
           <label className="mb-4 block">
-            <span className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted">Сумма, USD</span>
+            <span className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted">
+              {type === "deal" ? "Сумма, USD" : "Сумма КП, USD (необязательно)"}
+            </span>
             <input autoFocus inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^\d.]/g, ""))}
               className="w-full rounded-2xl border border-border bg-surface px-4 py-3 font-display text-3xl tabular outline-none" placeholder="0" />
-            {Number(amount) > 0 && <span className="mt-1 block text-sm text-muted">{fmtUsd(Number(amount))} → +{dealPts} очков</span>}
+            {Number(amount) > 0 && type === "deal" && <span className="mt-1 block text-sm text-muted">{fmtUsd(Number(amount))} → +{dealPts} очков</span>}
           </label>
         )}
 
@@ -340,8 +342,8 @@ function DetailsSheet(props: {
           </Group>
         )}
 
-        {type === "meeting_set" && scripts.length > 0 && (
-          <Group title="Использовал скрипт?">
+        {(type === "meeting_set" || type === "conversation" || type === "rejection") && scripts.length > 0 && (
+          <Group title="Использовал скрипт? (🎓 — скрипт брата)">
             {scripts.map((s) => (
               <button key={s.id} className={`${chip(script === s.id)} max-w-full truncate text-left`} style={chipStyle(script === s.id)}
                 onClick={() => setScript(script === s.id ? null : s.id)}>

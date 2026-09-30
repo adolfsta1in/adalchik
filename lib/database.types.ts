@@ -430,8 +430,18 @@ isOneToOne: false
 "current_player_id":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
+"funnel":
+{ Args: { "p_from": string,"p_to": string }; Returns: {
+              "deal_sum": number,"deals": number,"dials": number,"meetings_held": number,"meetings_set": number,"player_id": string,"proposal_sum": number,"proposals": number,"talks": number
+            }[]
+                           },
 "grant_achievement":
 { Args: { "p_activity": string,"p_code": string,"p_player": string }; Returns: undefined
+                           },
+"hour_heatmap":
+{ Args: { "p_from": string,"p_to": string }; Returns: {
+              "dials": number,"dow": number,"hour": number,"player_id": string,"talks": number
+            }[]
                            },
 "is_player":
 { Args: Record<PropertyKey, never>; Returns: boolean
@@ -449,6 +459,11 @@ isOneToOne: false
                            },
 "next_lead_status":
 { Args: { "cur": Database["public"]['Enums']["lead_status"],"t": Database["public"]['Enums']["activity_type"] }; Returns: Database["public"]['Enums']["lead_status"]
+                           },
+"objection_stats":
+{ Args: { "p_from": string,"p_to": string }; Returns: {
+              "objection_id": string,"per_region": Json,"scripts": number,"text": string,"total": number
+            }[]
                            },
 "player_local":
 { Args: { "p_at": string,"p_player": string }; Returns: Record<string, unknown>
@@ -488,6 +503,11 @@ isOneToOne: false
 "recompute_lead_status":
 { Args: { "p_lead": string }; Returns: undefined
                            },
+"script_stats":
+{ Args: { "p_from": string,"p_to": string }; Returns: {
+              "conv": number,"meetings": number,"script_id": string,"uses": number
+            }[]
+                           },
 "season_list":
 { Args: Record<PropertyKey, never>; Returns: {
               "champion_id": string,"month": string,"total": number
@@ -496,6 +516,11 @@ isOneToOne: false
 "season_summary":
 { Args: { "p_month": string }; Returns: {
               "avatar_color": string,"champion": boolean,"closed": boolean,"deal_sum": number,"deals": number,"meetings": number,"name": string,"player_id": string,"points": number
+            }[]
+                           },
+"segment_stats":
+{ Args: { "p_from": string,"p_to": string }; Returns: {
+              "conv": number,"industry": string,"meetings": number,"offer": Database["public"]['Enums']["offer_type"],"region": string,"talks": number
             }[]
                            },
 "start_blitz":
@@ -513,6 +538,11 @@ isOneToOne: false
 "week_summary":
 { Args: { "p_week": string }; Returns: {
               "avatar_color": string,"calibrating": boolean,"growth": number,"growth_winner": boolean,"name": string,"player_id": string,"points": number,"prev_avg": number,"prev_weeks": number,"region_label": string,"volume_winner": boolean,"week_closed": boolean
+            }[]
+                           },
+"what_works":
+{ Args: { "p_from": string,"p_min"?: number,"p_to": string }; Returns: {
+              "conv": number,"industry": string,"meetings": number,"offer": Database["public"]['Enums']["offer_type"],"rank": number,"region": string,"talks": number
             }[]
                            }
           }

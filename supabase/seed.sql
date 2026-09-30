@@ -76,7 +76,7 @@ begin
           null,
           case when t in ('conversation','rejection','meeting_set') then offers[1 + floor(random() * 4)::int] end,
           case when t = 'rejection' then obj_ids[1 + floor(random() * 5)::int] end,
-          case when t = 'meeting_set' and random() < 0.4
+          case when (t = 'meeting_set' and random() < 0.4) or (t in ('conversation','rejection') and random() < 0.15)
                then (select id from scripts where author_id = other order by random() limit 1) end,
           ts);
       end loop;
@@ -90,8 +90,8 @@ begin
       insert into activities (player_id, lead_id, type, offer, created_at)
       values (p.id, lid, 'meeting_held', offers[1 + floor(random() * 4)::int], ts);
       continue when random() < 0.4 or ts + interval '1 day' > now();
-      insert into activities (player_id, lead_id, type, offer, created_at)
-      values (p.id, lid, 'proposal', offers[1 + floor(random() * 4)::int], ts + interval '1 day');
+      insert into activities (player_id, lead_id, type, offer, deal_value, created_at)
+      values (p.id, lid, 'proposal', offers[1 + floor(random() * 4)::int], 800 + floor(random() * 40) * 100, ts + interval '1 day');
       continue when random() < 0.6 or ts + interval '3 days' > now();
       insert into activities (player_id, lead_id, type, offer, deal_value, created_at)
       values (p.id, lid, 'deal', offers[1 + floor(random() * 4)::int],
