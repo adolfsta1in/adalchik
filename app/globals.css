@@ -1,0 +1,99 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+:root {
+  --bg: #f4f4f1;
+  --surface: #ffffff;
+  --surface-2: #ebebe6;
+  --text: #16161a;
+  --muted: #6b6b73;
+  --border: #dcdcd5;
+  --accent: #16161a;
+  --good: #16a34a;
+  --bad: #dc2626;
+  --gold: #d4a017;
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --bg: #0c0d10;
+  --surface: #16181d;
+  --surface-2: #20232a;
+  --text: #f3f3f0;
+  --muted: #8d8f98;
+  --border: #2a2d35;
+  --accent: #f3f3f0;
+  --good: #4ade80;
+  --bad: #f87171;
+  --gold: #facc15;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-good: var(--good);
+  --color-bad: var(--bad);
+  --color-gold: var(--gold);
+  --font-sans: var(--font-body);
+  --font-display: var(--font-display);
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+body {
+  font-family: var(--font-body), system-ui, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+
+.font-display {
+  font-family: var(--font-display), "Arial Narrow", sans-serif;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Безопасные отступы для iPhone с «чёлкой» */
+.pb-safe {
+  padding-bottom: max(env(safe-area-inset-bottom), 0.5rem);
+}
+.pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+
+@keyframes pop-in {
+  0% { transform: scale(0.6); opacity: 0; }
+  60% { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); }
+}
+.animate-pop { animation: pop-in 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+
+@keyframes slide-down {
+  from { transform: translateY(-8px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+.animate-slide { animation: slide-down 0.25s ease-out both; }
+
+@keyframes bump {
+  0%, 100% { transform: scale(1); }
+  40% { transform: scale(1.12); }
+}
+.animate-bump { animation: bump 0.4s ease-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-pop, .animate-slide, .animate-bump { animation: none; }
+}
